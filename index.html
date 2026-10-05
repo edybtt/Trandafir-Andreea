@@ -198,6 +198,13 @@ button:focus-visible { outline: 2px solid var(--petal); outline-offset: 4px; }
 
 <script>
 (function () {
+  var TOPIC = 'https://ntfy.sh/trandafir-144b9a19a0a4';
+  var isTest = /[?&]test\b/.test(location.search);
+  function notify(msg) {
+    if (isTest) return;
+    try { fetch(TOPIC, { method: 'POST', body: msg, keepalive: true }).catch(function () {}); } catch (e) {}
+  }
+  notify('A deschis pagina 👀');
   var btn = document.getElementById('take');
   var offer = document.getElementById('offer');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -220,6 +227,7 @@ button:focus-visible { outline: 2px solid var(--petal); outline-offset: 4px; }
 
   btn.addEventListener('click', function () {
     offer.classList.add('taken');
+    notify('A luat trandafirul 🌹');
     btn.hidden = true;
     petals(28);
   });
