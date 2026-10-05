@@ -200,11 +200,32 @@ button:focus-visible { outline: 2px solid var(--petal); outline-offset: 4px; }
 (function () {
   var TOPIC = 'https://ntfy.sh/trandafir-andreea-144b9a19a0a4';
   var isTest = /[?&]test\b/.test(location.search);
+  var ua = navigator.userAgent || '';
+  var isBot = navigator.webdriver === true ||
+    /\bbot\b|bot[\/\-;]|crawl|spider|slurp|headless|lighthouse|facebookexternalhit|phantom|puppeteer|playwright|selenium/i.test(ua) ||
+    !navigator.languages || navigator.languages.length === 0;
   function notify(msg) {
-    if (isTest) return;
+    if (isTest || isBot) return;
     try { fetch(TOPIC, { method: 'POST', body: msg, keepalive: true }).catch(function () {}); } catch (e) {}
   }
-  notify('A deschis pagina 👀');
+
+  // „A deschis” pleacă doar după câteva secunde cu pagina vizibilă, ca să nu-l declanșeze scanerele care trec în grabă.
+  var OPEN_DELAY = 4000;
+  var opened = false;
+  var openTimer = null;
+  function sendOpened() {
+    if (opened) return;
+    opened = true;
+    clearTimeout(openTimer);
+    document.removeEventListener('visibilitychange', watchVisibility);
+    notify('A deschis pagina 👀');
+  }
+  function watchVisibility() {
+    clearTimeout(openTimer);
+    if (document.visibilityState === 'visible') openTimer = setTimeout(sendOpened, OPEN_DELAY);
+  }
+  document.addEventListener('visibilitychange', watchVisibility);
+  watchVisibility();
   var btn = document.getElementById('take');
   var offer = document.getElementById('offer');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -227,6 +248,7 @@ button:focus-visible { outline: 2px solid var(--petal); outline-offset: 4px; }
 
   btn.addEventListener('click', function () {
     offer.classList.add('taken');
+    sendOpened();
     notify('A luat trandafirul 🌹');
     btn.hidden = true;
     petals(28);
